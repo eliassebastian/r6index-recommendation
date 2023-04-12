@@ -11,5 +11,9 @@ type RecommendationServer struct {
 }
 
 func (s *RecommendationServer) Index(ctx context.Context, in *pb.Request) (*pb.Response, error) {
-	return nil, nil
+
+	return &pb.Response{
+		Code:    200,
+		Message: "OK",
+	}, nil
 }
