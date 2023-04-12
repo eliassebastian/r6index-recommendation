@@ -1,7 +1,6 @@
 package batch
 
 import (
-	"log"
 	"testing"
 	"time"
 )
@@ -53,6 +52,5 @@ func TestBatchPipelineWithErrors(t *testing.T) {
 	// Wait for a second to allow the pipeline to flush
 	time.Sleep(10 * time.Second)
 	pipeline.flushChan <- struct{}{}
-	log.Println("exiting channel")
 	<-pipeline.flushChan
 }
