@@ -1,8 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/eliassebastian/r6index-recommendation/internal/server"
 	pb "github.com/eliassebastian/r6index-recommendation/pkg/proto/server"
@@ -10,6 +16,9 @@ import (
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	// ...
 	log.Println("Server running ...")
 
@@ -20,6 +29,28 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterRecommendationServiceServer(grpcServer, &server.RecommendationServer{})
-	log.Fatalln(grpcServer.Serve(listener))
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		<-ctx.Done()
+
+		log.Printf("got signal %v, attempting graceful shutdown", ctx.Err())
+		stop()
+
+		grpcServer.GracefulStop()
+
+		<-time.After(5 * time.Second)
+
+		// grpc.Stop() // leads to error while receiving stream response: rpc error: code = Unavailable desc = transport is closing
+		wg.Done()
+	}()
+
+	err = grpcServer.Serve(listener)
+	if err != nil {
+		log.Fatalf("could not serve: %v", err)
+	}
+
+	wg.Wait()
+	log.Println("clean shutdown")
 }
