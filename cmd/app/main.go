@@ -19,8 +19,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// ...
-	log.Println("Server running ...")
+	log.Println("---Recommendation Service Starting---")
 
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
@@ -34,15 +33,13 @@ func main() {
 	wg.Add(1)
 	go func() {
 		<-ctx.Done()
-
 		log.Printf("got signal %v, attempting graceful shutdown", ctx.Err())
 		stop()
 
 		grpcServer.GracefulStop()
 
+		// Wait for 5 seconds before forceful shutdown
 		<-time.After(5 * time.Second)
-
-		// grpc.Stop() // leads to error while receiving stream response: rpc error: code = Unavailable desc = transport is closing
 		wg.Done()
 	}()
 
