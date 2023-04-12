@@ -1,0 +1,20 @@
+syntax = "proto3";
+ 
+option go_package = ".;server";
+
+service RecommendationService {
+    rpc Index(Request) returns (Response) {}
+}
+
+message Request {
+    string id = 1;
+    int32 level = 2;
+    float kost = 3;
+    int32 rank = 4;
+    int32 rank_points = 5; 
+}
+
+message Response {
+    int32 code = 1;
+    string message = 2;
+}
