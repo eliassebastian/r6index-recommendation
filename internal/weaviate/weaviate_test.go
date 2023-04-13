@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
@@ -24,6 +25,7 @@ func cleanupSimpleTestClient(t *testing.T, client *weaviate.Client) {
 	// Clean up test class and by that also all data
 	err := client.Schema().ClassDeleter().WithClassName("TestR6Index").Do(context.Background())
 	if err != nil {
+		cleanupSimpleTestClient(t, client)
 		t.Errorf("weaviate class delete error: got %v want nil", err)
 	}
 }
@@ -54,6 +56,7 @@ func createWeaviateTestSchemaWithVectorizorlessEuclideanClass(t *testing.T, clie
 
 	err := client.Schema().ClassCreator().WithClass(vectorizorlessClass).Do(context.Background())
 	if err != nil {
+		cleanupSimpleTestClient(t, client)
 		t.Errorf("weaviate class creator error: got %v want nil", err)
 	}
 
@@ -65,15 +68,16 @@ func createWeaviateTestSchemaWithVectorizorlessEuclideanClass(t *testing.T, clie
 
 	propErrT1 := client.Schema().PropertyCreator().WithClassName("TestR6Index").WithProperty(idProperty).Do(context.Background())
 	if propErrT1 != nil {
+		cleanupSimpleTestClient(t, client)
 		t.Errorf("weaviate property creator error: got %v want nil", propErrT1)
 	}
 
 }
 
 func TestWeaviateData(t *testing.T) {
-
 	t.Run("Test Single Vector Object", func(t *testing.T) {
 		client := createSimpleTestClient()
+		//cleanupSimpleTestClient(t, client)
 		createWeaviateTestSchemaWithVectorizorlessDefaultClass(t, client)
 
 		vec := []float32{211.0, 0.76, 35.0, 3424.0}
@@ -85,10 +89,12 @@ func TestWeaviateData(t *testing.T) {
 			Do(context.Background())
 
 		if errCreate != nil {
+			cleanupSimpleTestClient(t, client)
 			t.Errorf("weaviate data creator error: got %v want nil", errCreate)
 		}
 
 		if wrapper == nil {
+			cleanupSimpleTestClient(t, client)
 			t.Errorf("weaviate data creator error: got nil want not nil")
 		}
 
@@ -99,15 +105,18 @@ func TestWeaviateData(t *testing.T) {
 			Do(context.Background())
 
 		if objErr != nil {
+			cleanupSimpleTestClient(t, client)
 			t.Errorf("weaviate data getter error: got %v want nil", objErr)
 		}
 
 		if len(object) == 0 {
+			cleanupSimpleTestClient(t, client)
 			t.Errorf("weaviate data getter error: got empty object want not empty")
 		}
 
 		arr := []float32(object[0].Vector)
 		if !reflect.DeepEqual(arr, vec) {
+			cleanupSimpleTestClient(t, client)
 			t.Errorf("weaviate data getter error: got %v want %v", arr, vec)
 		}
 
@@ -116,6 +125,7 @@ func TestWeaviateData(t *testing.T) {
 
 	t.Run("Test Batch Import Vector Object", func(t *testing.T) {
 		client := createSimpleTestClient()
+		//cleanupSimpleTestClient(t, client)
 		createWeaviateTestSchemaWithVectorizorlessDefaultClass(t, client)
 
 		// sample batch data
@@ -163,6 +173,7 @@ func TestWeaviateData(t *testing.T) {
 
 	t.Run("Test Batch Import Vector Object with Euclidean Distance", func(t *testing.T) {
 		client := createSimpleTestClient()
+		//cleanupSimpleTestClient(t, client)
 		createWeaviateTestSchemaWithVectorizorlessEuclideanClass(t, client)
 
 		// sample batch data
@@ -268,6 +279,77 @@ func TestWeaviateData(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("weaviate graphql error: got %v want nil", err)
+		}
+
+		cleanupSimpleTestClient(t, client)
+	})
+}
+
+func TestDataToWeaviateObjectModel(t *testing.T) {
+
+	t.Run("convert input data to weaviate data model objects", func(t *testing.T) {
+		client := createSimpleTestClient()
+		createWeaviateTestSchemaWithVectorizorlessEuclideanClass(t, client)
+
+		tests := []struct {
+			id         string
+			level      int32
+			kost       float32
+			rank       int32
+			rankPoints int32
+		}{
+			{
+				id:         "6844b415-aa94-43c9-8823-9389e4816918",
+				level:      300,
+				kost:       0.55,
+				rank:       18,
+				rankPoints: 1250,
+			},
+			{
+				id:         "6844b415-aa94-43c9-8823-9389e4816454",
+				level:      300,
+				kost:       0.58,
+				rank:       18,
+				rankPoints: 1245,
+			},
+			{
+				id:         "6844b415-aa94-43c9-8823-9389e4816861",
+				level:      299,
+				kost:       0.51,
+				rank:       18,
+				rankPoints: 1255,
+			},
+		}
+
+		var data []*models.Object
+
+		for _, in := range tests {
+			data = append(data, &models.Object{
+				Class:  "TestR6Index",
+				ID:     strfmt.UUID(in.id),
+				Vector: []float32{float32(in.level), float32(in.kost), float32(in.rank), float32(in.rankPoints)},
+				Properties: map[string]string{
+					"uuid": in.id,
+				},
+			})
+		}
+
+		fmt.Printf("data %v", data)
+
+		batchR, err := client.Batch().ObjectsBatcher().WithObjects(data...).Do(context.Background())
+		if err != nil {
+			cleanupSimpleTestClient(t, client)
+			t.Errorf("weaviate batch creator error: got %v want nil", err)
+		}
+
+		if batchR == nil {
+			cleanupSimpleTestClient(t, client)
+			t.Errorf("weaviate batch creator error: got nil want not nil")
+		}
+
+		if len(batchR) != len(data) {
+			cleanupSimpleTestClient(t, client)
+			t.Errorf("weaviate batch creator error: got %d want %d", len(batchR), len(data))
 		}
 
 		cleanupSimpleTestClient(t, client)
