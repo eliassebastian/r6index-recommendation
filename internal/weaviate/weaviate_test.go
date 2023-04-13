@@ -43,6 +43,7 @@ func TestWeaviateData(t *testing.T) {
 
 	t.Run("Test Single Vector Object", func(t *testing.T) {
 		client := createSimpleTestClient()
+		createWeaviateTestSchemaWithVectorizorlessClass(t, client)
 
 		vec := []float32{211.0, 0.76, 35.0, 3424.0}
 
