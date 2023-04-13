@@ -207,6 +207,30 @@ func TestWeaviateData(t *testing.T) {
 					"uuid": "6844b415-aa94-43c9-8823-9389e4816918",
 				},
 			},
+			{
+				ID:     "6844b415-aa94-43c9-8823-9389e4816300",
+				Vector: []float32{245.0, 0.55, 19.0, 1400.0},
+				Class:  "TestR6Index",
+				Properties: map[string]string{
+					"uuid": "6844b415-aa94-43c9-8823-9389e4816300",
+				},
+			},
+			{
+				ID:     "6844b415-aa94-43c9-8823-9389e4816454",
+				Vector: []float32{300.0, 0.58, 18.0, 1245.0},
+				Class:  "TestR6Index",
+				Properties: map[string]string{
+					"uuid": "6844b415-aa94-43c9-8823-9389e4816454",
+				},
+			},
+			{
+				ID:     "6844b415-aa94-43c9-8823-9389e4816861",
+				Vector: []float32{299.0, 0.51, 18.0, 1255.0},
+				Class:  "TestR6Index",
+				Properties: map[string]string{
+					"uuid": "6844b415-aa94-43c9-8823-9389e4816861",
+				},
+			},
 		}
 
 		batchR, err := client.Batch().ObjectsBatcher().WithObjects(data...).Do(context.Background())
@@ -219,38 +243,32 @@ func TestWeaviateData(t *testing.T) {
 			t.Errorf("weaviate batch creator error: got nil want not nil")
 		}
 
-		if len(batchR) != 5 {
-			t.Errorf("weaviate batch creator error: got %d want %d", len(batchR), 5)
+		if len(batchR) != len(data) {
+			t.Errorf("weaviate batch creator error: got %d want %d", len(batchR), len(data))
 		}
 
 		ids := graphql.Field{Name: "uuid"}
 
-		result, err := client.GraphQL().Get().
-			WithClassName("TestR6Index").
-			WithFields(ids).
-			Do(context.Background())
-
-		fmt.Printf("test1 %v %v", result, err)
-
-		objectT1, objErrT1 := client.Data().ObjectsGetter().WithClassName("TestR6Index").Do(context.Background())
-		fmt.Printf("test2 %v %v", objectT1, objErrT1)
-
-		// withNearObject := client.GraphQL().NearObjectArgBuilder().WithID("6844b415-aa94-43c9-8823-9389e4816905").WithCertainty(0.5)
-		// resultSet, gqlErr := client.GraphQL().Get().
+		// result, err := client.GraphQL().Get().
 		// 	WithClassName("TestR6Index").
-		// 	WithNearObject(withNearObject).
-		// 	WithLimit(10).
+		// 	WithFields(ids).
 		// 	Do(context.Background())
 
-		// if gqlErr != nil {
-		// 	t.Errorf("weaviate graphql error: got %v want nil", gqlErr)
-		// }
+		// fmt.Printf("test1 %v %v", result, err)
 
-		// if resultSet == nil {
-		// 	t.Errorf("weaviate graphql error: got nil want not nil")
-		// }
+		nearObject := client.GraphQL().NearObjectArgBuilder().WithID("6844b415-aa94-43c9-8823-9389e4816918")
+		nearResult, err := client.GraphQL().Get().
+			WithClassName("TestR6Index").
+			WithFields(ids).
+			WithNearObject(nearObject).
+			WithLimit(5).
+			Do(context.Background())
 
-		// fmt.Printf("%v", resultSet)
+		fmt.Printf("nearObject %v %v", nearResult, err)
+
+		if err != nil {
+			t.Errorf("weaviate graphql error: got %v want nil", err)
+		}
 
 		cleanupSimpleTestClient(t, client)
 	})
