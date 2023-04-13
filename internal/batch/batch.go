@@ -63,18 +63,28 @@ func (bp *BatchPipeline) executeAndFlush() error {
 }
 
 func (bp *BatchPipeline) flushAfterDeadline() {
+
+	timer := time.NewTimer(bp.maxWait)
+
 	for {
 		select {
-		case <-bp.flushChan:
-			bp.flushChan <- struct{}{}
-			return
-		case <-time.After(bp.maxWait):
+		case <-timer.C:
+			log.Println("flushing after deadline passed")
 			bp.mutex.Lock()
 			err := bp.executeAndFlush()
 			if err != nil {
 				log.Println(err)
 			}
 			bp.mutex.Unlock()
+			// reset the timer
+			timer.Reset(bp.maxWait)
+
+		case <-bp.flushChan:
+			bp.flushChan <- struct{}{}
+			if !timer.Stop() {
+				<-timer.C
+			}
+			return
 		}
 	}
 }
