@@ -249,12 +249,12 @@ func TestWeaviateData(t *testing.T) {
 
 		ids := graphql.Field{Name: "uuid"}
 
-		// result, err := client.GraphQL().Get().
-		// 	WithClassName("TestR6Index").
-		// 	WithFields(ids).
-		// 	Do(context.Background())
-
-		// fmt.Printf("test1 %v %v", result, err)
+		// nearObject
+		// uuid:6844b415-aa94-43c9-8823-9389e4816918
+		// uuid:6844b415-aa94-43c9-8823-9389e4816454
+		// uuid:6844b415-aa94-43c9-8823-9389e4816861
+		// uuid:6844b415-aa94-43c9-8823-9389e4816905
+		// uuid:6844b415-aa94-43c9-8823-9389e4816300
 
 		nearObject := client.GraphQL().NearObjectArgBuilder().WithID("6844b415-aa94-43c9-8823-9389e4816918")
 		nearResult, err := client.GraphQL().Get().
