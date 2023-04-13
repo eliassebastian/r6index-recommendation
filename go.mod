@@ -3,6 +3,8 @@ module github.com/eliassebastian/r6index-recommendation
 go 1.20
 
 require (
+	github.com/go-openapi/strfmt v0.21.3
+	github.com/weaviate/weaviate v1.18.2
 	github.com/weaviate/weaviate-go-client/v4 v4.7.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.28.1
@@ -18,7 +20,6 @@ require (
 	github.com/go-openapi/jsonreference v0.19.6 // indirect
 	github.com/go-openapi/loads v0.21.1 // indirect
 	github.com/go-openapi/spec v0.20.4 // indirect
-	github.com/go-openapi/strfmt v0.21.3 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-openapi/validate v0.21.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -26,7 +27,6 @@ require (
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/weaviate/weaviate v1.18.2 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
